@@ -48,6 +48,10 @@
 pipeline {
     agent any // Jenkins chính (máy chủ) vẫn chạy
 
+    triggers {
+        pollSCM('H/3 * * * *') // Kiểm tra mã nguồn mỗi 5 phút
+    }
+
     options {
         timeout(time: 30, unit: 'MINUTES')
         timestamps()
