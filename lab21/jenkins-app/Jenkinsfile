@@ -1,3 +1,50 @@
+// pipeline {
+//     agent any
+
+//     options {
+//         timeout(time: 30, unit: 'MINUTES')
+//         timestamps()
+//     }
+
+//     stages {
+//         stage('Checkout') {
+//             steps {
+//                 checkout scm
+//             }
+//         }
+
+//         stage('Install & Lint & Build') {
+//             agent {
+//                 docker {
+//                     image 'node:22-alpine'
+//                     reuseNode true
+//                 }
+//             }
+//             steps {
+//                 sh 'node -v && npm -v'
+//                 sh 'npm ci'
+//                 sh 'npm run lint'
+//                 sh 'npm run build'
+//             }
+//         }
+//     }
+
+//     post {
+//         success {
+//             archiveArtifacts artifacts: 'dist/**/*', fingerprint: true, allowEmptyArchive: false
+//         }
+//         failure {
+//             echo 'Pipeline thất bại - xem log từng stage (Install & Lint & Build).'
+//         }
+//     }
+
+// }
+
+// // docker compose build --no-cache
+// // docker compose up -d
+// // docker compose exec jenkins docker version
+
+
 pipeline {
     agent any
 
@@ -14,32 +61,27 @@ pipeline {
         }
 
         stage('Install & Lint & Build') {
-            agent {
-                docker {
-                    image 'node:22-alpine'
-                    reuseNode true
-                }
-            }
             steps {
-                sh 'node -v && npm -v'
-                sh 'npm ci'
-                sh 'npm run lint'
-                sh 'npm run build'
+                // Sử dụng dir để chui vào đúng thư mục chứa code
+                dir('lab21/jenkins-app') {
+                    // Nếu Jenkins chạy trên Windows, dùng 'bat' thay cho 'sh'
+                    bat 'node -v && npm -v'
+                    bat 'npm install' 
+                    // (Dùng 'npm install' thay cho 'npm ci' nếu bạn không có file package-lock.json chuẩn)
+                    bat 'npm run lint'
+                    bat 'npm run build'
+                }
             }
         }
     }
 
     post {
         success {
-            archiveArtifacts artifacts: 'dist/**/*', fingerprint: true, allowEmptyArchive: false
+            // Lưu ý đường dẫn artifacts cũng phải trỏ vào thư mục con
+            archiveArtifacts artifacts: 'lab21/jenkins-app/dist/**/*', fingerprint: true, allowEmptyArchive: false
         }
         failure {
             echo 'Pipeline thất bại - xem log từng stage (Install & Lint & Build).'
         }
     }
-
 }
-
-// docker compose build --no-cache
-// docker compose up -d
-// docker compose exec jenkins docker version
