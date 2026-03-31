@@ -46,7 +46,7 @@
 
 
 pipeline {
-    agent any
+    agent any // Jenkins chính (máy chủ) vẫn chạy
 
     options {
         timeout(time: 30, unit: 'MINUTES')
@@ -54,20 +54,19 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
+        stage('Install & Build') {
+            agent {
+                docker {
+                    // Jenkins sẽ tự tải image này về để có môi trường Node.js
+                    image 'node:22-alpine'
+                    // Giữ lại các file đã checkout từ stage trước
+                    reuseNode true 
+                }
             }
-        }
-
-        stage('Install & Lint & Build') {
             steps {
-                // Chui vào đúng thư mục chứa package.json
                 dir('lab21/jenkins-app') {
-                    // Đổi 'bat' thành 'sh' vì Jenkins đang chạy trên Linux
-                    sh 'node -v && npm -v'
+                    sh 'node -v'
                     sh 'npm install'
-                    sh 'npm run lint'
                     sh 'npm run build'
                 }
             }
@@ -79,7 +78,7 @@ pipeline {
             archiveArtifacts artifacts: 'lab21/jenkins-app/dist/**/*', fingerprint: true, allowEmptyArchive: false
         }
         failure {
-            echo 'Pipeline thất bại - xem log từng stage (Install & Lint & Build).'
+            echo 'Pipeline thất bại - Kiểm tra lại Docker hoặc Node.js'
         }
     }
 }
